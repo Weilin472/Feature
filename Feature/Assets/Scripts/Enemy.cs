@@ -13,29 +13,25 @@ public enum AttackType
     Null
 }
 
-public class Enemy : MonoBehaviour
+public class Enemy : BaseCharacter
 {
+    public Player player;
+
     public GameObject PreAttackObject;
     public GameObject AttackShowObject;
-    public Slider slider;
-    private AttackType attackType;
+    public AttackType attackType;
     private Color[] attackColorArray = new Color[] { Color.yellow, Color.blue, Color.red, Color.black };
     private int attackNum;
-    private bool pressBlockKey;
-    private int blockValue;
 
-    // Start is called before the first frame update
-    void Start()
+
+    protected override void Init()
     {
+        blockValue = 50;
+        health = 100;
+        healthSlider.value = health / 100;
+        blockValueSlider.value = blockValue / 100;
         attackType = AttackType.Null;
-        blockValue = 0;
         InvokeRepeating("AttackAction", 2, 2);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     private void AttackAction()
@@ -45,7 +41,7 @@ public class Enemy : MonoBehaviour
 
     private IEnumerator RealAttack()
     {
-        pressBlockKey = false;
+        player.pressBlockKey = false;
         attackNum = Random.Range(0, 4);
         PreAttackObject.SetActive(true);
         PreAttackObject.GetComponent<MeshRenderer>().material.color = attackColorArray[attackNum];
@@ -57,107 +53,31 @@ public class Enemy : MonoBehaviour
         yield return new WaitForSeconds(0.3f);
         attackType = AttackType.Null;
         AttackShowObject.SetActive(false);
-        if (pressBlockKey==false)
+        if (player.pressBlockKey == false)
         {
-            Hurt();
+           player.Hurt();
         }
     }
 
-    private void Hurt()
-    {
-        blockValue -= 10;
-        if (blockValue<=0)
-        {
-            blockValue = 0;
-        }
-        slider.value = (float)blockValue / 100;
-        Debug.Log(blockValue);
-    }
-
-    private void BlockSucessfully()
-    {
-        blockValue += 10;
-        if (blockValue >= 100)
-        {
-            Debug.Log("win!");
-            CancelInvoke();   
-        }
-        slider.value =(float)blockValue / 100;
-        Debug.Log(blockValue);
-    }
-
-    private void ResetAttack()
+    public void ResetAttack()
     {
         attackType = AttackType.Null;
 
     }
 
-    public void PressQ(InputAction.CallbackContext callback)
+    public void BeBlocked()
     {
-        if (callback.performed&& attackType!=AttackType.Null)
+        blockValue += 10;
+        if (blockValue >= 100)
         {
-            pressBlockKey = true;
-            if (attackType==AttackType.YellowAttack)
-            {
-                BlockSucessfully();
-            }
-            else
-            {
-                Hurt();
-            }
-            ResetAttack();
+            blockValue = 100;
         }
+        blockValueSlider.value = blockValue / 100;
     }
 
-    public void PressW(InputAction.CallbackContext callback)
+    protected override void Win()
     {
-        if (callback.performed && attackType != AttackType.Null)
-        {
-            pressBlockKey = true;
-            if (attackType == AttackType.BlueAttack)
-            {
-                BlockSucessfully();
-            }
-            else
-            {
-                Hurt();
-            }
-            ResetAttack();
-        }
-    }
-
-    public void PressE(InputAction.CallbackContext callback)
-    {
-        if (callback.performed && attackType != AttackType.Null)
-        {
-            pressBlockKey = true;
-            if (attackType == AttackType.RedAttack )
-            {
-                BlockSucessfully();
-            }
-            else
-            {
-                Hurt();
-            }
-            ResetAttack();
-        }
-    }
-
-    public void PressR(InputAction.CallbackContext callback)
-    {
-        if (callback.performed && attackType != AttackType.Null)
-        {
-            pressBlockKey = true;
-            if (attackType == AttackType.BlackAttack)
-            {
-                BlockSucessfully();
-            }
-            else
-            {
-                Hurt();
-            }
-            ResetAttack();
-        }
-
+        base.Win();
+        CancelInvoke();
     }
 }
