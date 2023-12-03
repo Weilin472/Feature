@@ -6,10 +6,10 @@ using UnityEngine.UI;
 
 public enum AttackType
 {
-    YellowAttack,
-    BlueAttack,
-    RedAttack,
-    BlackAttack,
+    YellowAttack,//can press Q to block
+    BlueAttack,//can press w to block
+    RedAttack,//can press e to block
+    BlackAttack,//can press r to block
     Null
 }
 
@@ -17,110 +17,100 @@ public class Enemy : BaseCharacter
 {
     public Player player;
 
-    public GameObject PreAttackObject;
+    public GameObject PreAttackObject;//indicate what the attacktype it will be
     public GameObject AttackShowObject;
     public AttackType attackType;
     private Color[] attackColorArray = new Color[] { Color.yellow, Color.blue, Color.red, Color.black };
     private int attackNum;
 
-    private List<List<AttackType>> attackComboList = new List<List<AttackType>>();
+    public bool canAttack;
+
+
+    private List<AttackComboList<AttackType, float>> attackComboLists = new List<AttackComboList<AttackType, float>>();//store different combo
 
     protected override void Init()
     {
-        BlockValue = 50;
+        canAttack = true;
+        PostureValue = 50;
         Health = 100;
         attackType = AttackType.Null;
-        Invoke("AttackAction", 2);
         InitCombo();
+        Invoke("AttackAction", 2);
     }
 
     private void InitCombo()
-    {
-        List<AttackType> combo1 = new List<AttackType>();
-        combo1.Add(AttackType.YellowAttack);
-        combo1.Add(AttackType.YellowAttack);
-        combo1.Add(AttackType.YellowAttack);
-        combo1.Add(AttackType.BlueAttack);
+    { 
 
-        attackComboList.Add(combo1);
+        AttackComboList<AttackType, float> combo1 = new AttackComboList<AttackType, float>();
+        combo1.Add(AttackType.YellowAttack, 0.3f);//the float is the time that between the preattack and the real attack, so some attacks are fast, and some are slow
+        combo1.Add(AttackType.YellowAttack, 0.3f);
+        combo1.Add(AttackType.YellowAttack, 0.3f);
+        combo1.Add(AttackType.BlueAttack, 0.6f);
 
+        AttackComboList<AttackType, float> combo2 = new AttackComboList<AttackType, float>();
+        combo2.Add(AttackType.YellowAttack, 0.6f);
+        combo2.Add(AttackType.BlueAttack, 0.6f);
+        combo2.Add(AttackType.RedAttack, 0.6f);
+        combo2.Add(AttackType.BlackAttack, 0.6f);
+
+        AttackComboList<AttackType, float> combo3 = new AttackComboList<AttackType, float>();
+        combo3.Add(AttackType.YellowAttack, 0.2f);
+        combo3.Add(AttackType.BlueAttack, 0.2f);
+        combo3.Add(AttackType.RedAttack, 0.2f);
+        combo3.Add(AttackType.BlackAttack, 0.2f);
+
+        //there are three types of combo rn
+        attackComboLists.Add(combo1);
+        attackComboLists.Add(combo2);
+        attackComboLists.Add(combo3);
     }
 
     private void AttackAction()
     {
         GetComponent<MeshRenderer>().material.color = Color.red;
+        canAttack = true;
         StartCoroutine("RealAttack");
+
     }
 
     private IEnumerator RealAttack()
-    {
-        int attackNum = Random.Range(0, attackComboList.Count);
-        List<AttackType> attackList = attackComboList[attackNum];
-        //foreach (var item in attackDic)
-        //{
-        //    PreAttackObject.SetActive(true);
-        //    PreAttackObject.GetComponent<MeshRenderer>().material.color = attackColorArray[(int)item.Key];
-        //    yield return new WaitForSeconds(0.3f);
-        //    PreAttackObject.SetActive(false);
-        //    AttackShowObject.SetActive(true);
-        //    AttackShowObject.GetComponent<MeshRenderer>().material.color = attackColorArray[(int)item.Key];
-        //    attackType = item.Key;
-        //    yield return new WaitForSeconds(item.Value);
-        //    attackType = AttackType.Null;
-        //    AttackShowObject.SetActive(false);
-        //    if (!player.isDefensing && !player.pressBlockKey)
-        //    {
-        //        player.Hurt(15);
-        //    }
-        //    else if (player.isDefensing)
-        //    {
-        //        player.DefenseAttack();
-        //    }
-        //}
-
-        for (int i = 0; i < attackList.Count; i++)
+    {    
+        while (canAttack)
         {
-            PreAttackObject.SetActive(true);
-            PreAttackObject.GetComponent<MeshRenderer>().material.color = attackColorArray[(int)attackList[i]];
-            yield return new WaitForSeconds(0.3f);
-            PreAttackObject.SetActive(false);
-            AttackShowObject.SetActive(true);
-            AttackShowObject.GetComponent<MeshRenderer>().material.color = attackColorArray[(int)attackList[i]];
-            attackType = attackList[i];
-            yield return new WaitForSeconds(0.3f);
-            attackType = AttackType.Null;
-            AttackShowObject.SetActive(false);
-            if (!player.isDefensing && !player.pressBlockKey)
-            {
-                player.Hurt(15);
-            }
-            else if (player.isDefensing)
-            {
-                player.DefenseAttack();
-            }
-        }
-
-        //player.pressBlockKey = false;
-        //attackNum = Random.Range(0, 4);
-        //PreAttackObject.SetActive(true);
-        //PreAttackObject.GetComponent<MeshRenderer>().material.color = attackColorArray[attackNum];
-        //yield return new WaitForSeconds(0.3f);
-        //PreAttackObject.SetActive(false);
-        //AttackShowObject.SetActive(true);
-        //AttackShowObject.GetComponent<MeshRenderer>().material.color = attackColorArray[attackNum];
-        //attackType = (AttackType)attackNum;
-        //yield return new WaitForSeconds(0.3f);
-        //attackType = AttackType.Null;
-        //AttackShowObject.SetActive(false);
-
-        //if (!player.isDefensing && !player.pressBlockKey)
-        //{
-        //    player.Hurt(15);
-        //}
-        //else if (player.isDefensing)
-        //{
-        //    player.DefenseAttack();
-        //}
+                int attackNum = Random.Range(0, attackComboLists.Count);//decide which combo is going to use
+                AttackComboList<AttackType, float> currentCombo = attackComboLists[attackNum];
+                for (int i = 0; i < currentCombo.Count; i++)
+                {
+                    if (!canAttack)
+                    {
+                        break;
+                    }
+                    AttackType currentAttackType = currentCombo.GetFirstValue(i);
+                    float timeBeforeAttack = currentCombo.GetSecondValue(i);
+                    PreAttackObject.SetActive(true);//the preattackobject is used to indicate what the attacktype it is.
+                    PreAttackObject.GetComponent<MeshRenderer>().material.color = attackColorArray[(int)currentAttackType];
+                    yield return new WaitForSeconds(timeBeforeAttack);
+                    player.pressBlockKey = false;
+                    PreAttackObject.SetActive(false);
+                    AttackShowObject.SetActive(true);
+                    AttackShowObject.GetComponent<MeshRenderer>().material.color = attackColorArray[(int)currentAttackType];
+                    attackType = currentAttackType;
+                    yield return new WaitForSeconds(0.3f);//the player can block the attacks in this 0.3f
+                    attackType = AttackType.Null;//the player can not block the attacks if the attacktype is reset to Null
+                    AttackShowObject.SetActive(false);
+                    if (!player.isDefensing && !player.pressBlockKey)
+                    {
+                        player.Hurt(15);
+                    }
+                    else if (player.isDefensing)
+                    {
+                        player.DefenseAttack();
+                    }
+                }
+                float nextAttackTime = Random.Range(3, 5);
+                yield return new WaitForSeconds(nextAttackTime);
+                     
+        }   
     }
 
     public void ResetAttackType()
@@ -131,11 +121,7 @@ public class Enemy : BaseCharacter
 
     public void BeBlocked()
     {
-        BlockValue += 10;
-        //if (BlockValue >= 100)
-        //{
-        //    InvokeRepeating("AttackAction", 7, 2);
-        //}
+        PostureValue += 10;
     }
 
    
@@ -148,7 +134,8 @@ public class Enemy : BaseCharacter
     protected override void Win()
     {
         base.Win();
-        CancelInvoke();
+        canAttack = false;
+        StopAllCoroutines();
         player.GetComponent<PlayerInput>().enabled = false;
     }
 }

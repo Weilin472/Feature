@@ -4,16 +4,16 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 
-
+//the parent class of the enemy and the player
 public class BaseCharacter : MonoBehaviour
 {
   
     protected bool isPlayer;
 
     private float health;
-    private float blockValue;
+    private float postureValue;
     public Slider healthSlider;
-    public Slider blockValueSlider;
+    public Slider postureSlider;
 
     protected float Health { get => health; set
         { health = value;
@@ -37,25 +37,26 @@ public class BaseCharacter : MonoBehaviour
     
     }
 
-    protected float BlockValue { get => blockValue; set 
-        { blockValue = value;
-            if (blockValue>=100)
+    //if the posturevalue reach to 100, the character would be still
+    protected float PostureValue { get => postureValue; set 
+        { postureValue = value;
+            if (postureValue>=100)
             {
-                blockValue = 100;
+                postureValue = 100;
                 Still();
             }
-            else if (blockValue<=0)
+            else if (postureValue<=0)
             {
-                blockValue = 0;
+                postureValue = 0;
             }
-          blockValueSlider.value = blockValue / 100; 
+          postureSlider.value = postureValue / 100; 
         }
     }
 
     protected virtual void Init()
     {
         Health = 100;
-        BlockValue = 50;
+        PostureValue = 50;
     }
     // Start is called before the first frame update
     void Start()
@@ -80,10 +81,12 @@ public class BaseCharacter : MonoBehaviour
         UIManager.Instance.ShowWinUI();
     }
 
+
+    //if the character is stilled, it would become white, and the posturevalue reset to 50
     protected void Still()
     {
         GetComponent<MeshRenderer>().material.color = Color.white;
-        BlockValue = 50;
+        PostureValue = 50;
         if (isPlayer)
         {
             GetComponent<PlayerInput>().enabled = false;
@@ -91,7 +94,7 @@ public class BaseCharacter : MonoBehaviour
         }
         else
         {
-            CancelInvoke();
+            GetComponent<Enemy>().canAttack = false;
             Invoke("AttackAction",5);
         }
     }
